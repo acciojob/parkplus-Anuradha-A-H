@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 @Service
 public class ParkingLotServiceImpl implements ParkingLotService {
@@ -36,19 +37,20 @@ public class ParkingLotServiceImpl implements ParkingLotService {
 
     @Override
     public Spot addSpot(int parkingLotId, Integer numberOfWheels, Integer pricePerHour) {
-        ParkingLot parkingLot = parkingLotRepository1.findById(parkingLotId)
-                .orElseThrow(() -> new IllegalArgumentException("Parking lot not found"));
-
+        Optional<ParkingLot> parking = parkingLotRepository1.findById(parkingLotId);
+        if(parking.isEmpty())
+            return null;
+        ParkingLot parkingLot = parking.get();
         SpotType spotType = determineSpotType(numberOfWheels);
 
         Spot spot = new Spot( parkingLot , spotType, pricePerHour, false);
 
-        Spot save = spotRepository1.save(spot);
+        Spot spot1 = spotRepository1.save(spot);
         List<Spot> spotList = parkingLot.getSpotList();
         spotList.add(spot);
         parkingLot.setSpotList(spotList);
         parkingLotRepository1.save(parkingLot);
-        return save;
+        return spot1;
     }
 
 
@@ -65,8 +67,10 @@ public class ParkingLotServiceImpl implements ParkingLotService {
     }
     @Override
     public void deleteSpot(int spotId) {
-        Spot spot = spotRepository1.findById(spotId)
-                .orElseThrow(() -> new IllegalArgumentException("Spot not found"));
+        Optional<Spot> sp = spotRepository1.findById(spotId);
+        if(sp.isEmpty())
+            return;
+        Spot spot = sp.get();
 
         // Delete the spot entity from the database
         ParkingLot p = spot.getParkingLot();
@@ -86,10 +90,14 @@ public class ParkingLotServiceImpl implements ParkingLotService {
 
     @Override
     public Spot updateSpot(int parkingLotId, int spotId, int pricePerHour) {
-        ParkingLot parkingLot = parkingLotRepository1.findById(parkingLotId)
-                .orElseThrow(() -> new IllegalArgumentException("Parking lot not found"));
-        Spot spot = spotRepository1.findById(spotId)
-                .orElseThrow(() -> new IllegalArgumentException("Spot not found"));
+        Optional<ParkingLot> parking = parkingLotRepository1.findById(parkingLotId);
+        if(parking.isEmpty())
+             return null;
+        ParkingLot parkingLot = parking.get();
+        Optional<Spot> sp = spotRepository1.findById(spotId);
+        if(sp.isEmpty())
+            return null;
+        Spot spot = sp.get();
         spot.setPricePerHour(pricePerHour);
 
 
@@ -113,8 +121,10 @@ public class ParkingLotServiceImpl implements ParkingLotService {
 
     @Override
     public void deleteParkingLot(int parkingLotId) {
-        ParkingLot parkingLot = parkingLotRepository1.findById(parkingLotId)
-                .orElseThrow(() -> new IllegalArgumentException("Parking lot not found"));
+        Optional<ParkingLot> parking = parkingLotRepository1.findById(parkingLotId);
+        if(parking.isEmpty())
+            return;
+        ParkingLot parkingLot = parking.get();
 
         // Delete all associated spots
         List<Spot> spots = parkingLot.getSpotList();

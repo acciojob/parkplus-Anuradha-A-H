@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class PaymentServiceImpl implements PaymentService {
@@ -24,8 +25,12 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public Payment pay(Integer reservationId, int amountSent, String mode) throws Exception {
-        Reservation reservation = reservationRepository2.findById(reservationId)
-                .orElseThrow(() -> new IllegalArgumentException("Reservation not found"));
+        Optional<Reservation> reser = reservationRepository2.findById(reservationId);
+        if(reser.isEmpty())
+        {
+             throw new Exception("");
+        }
+        Reservation reservation = reser.get();
 
         Spot spot = reservation.getSpot();
         int bill = spot.getPricePerHour() * reservation.getNumberOfHours();
@@ -33,14 +38,14 @@ public class PaymentServiceImpl implements PaymentService {
         mode = mode.toLowerCase(); // Convert mode to lowercase for case-insensitive comparison
         PaymentMode p = getPaymentmode(mode);
         if (!mode.equals("cash") && !mode.equals("card") && !mode.equals("upi") ) {
-            throw new IllegalArgumentException("Payment mode not detected");
+            throw new Exception("Payment mode not detected");
         }
         if(p == null)
         {
-            throw new IllegalArgumentException("Payment mode not detected");
+            throw new Exception("Payment mode not detected");
         }
         if (amountSent < bill) {
-            throw new IllegalArgumentException("Insufficient Amount");
+            throw new Exception("Insufficient Amount");
         }
 
         Payment payment = new Payment();
