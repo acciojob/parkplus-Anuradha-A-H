@@ -14,64 +14,59 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 
-@Service
+@@Service
 public class PaymentServiceImpl implements PaymentService {
     @Autowired
-    ReservationRepository reservationRepository2;
+    ReservationRepository reservationRepository;
+
     @Autowired
-    PaymentRepository paymentRepository2;
+    PaymentRepository paymentRepository;
+
     @Autowired
     SpotRepository spotRepository;
 
     @Override
     public Payment pay(Integer reservationId, int amountSent, String mode) throws Exception {
-        Optional<Reservation> reser = reservationRepository2.findById(reservationId);
-        if(reser.isEmpty())
-        {
-             throw new Exception("");
+        Optional<Reservation> reservationOptional = reservationRepository.findById(reservationId);
+        if (reservationOptional.isEmpty()) {
+            throw new IllegalArgumentException("Reservation not found");
         }
-        Reservation reservation = reser.get();
+        Reservation reservation = reservationOptional.get();
 
         Spot spot = reservation.getSpot();
         int bill = spot.getPricePerHour() * reservation.getNumberOfHours();
 
-        mode = mode.toLowerCase(); // Convert mode to lowercase for case-insensitive comparison
-        PaymentMode p = getPaymentmode(mode);
-        if (!mode.equals("cash") && !mode.equals("card") && !mode.equals("upi") ) {
-            throw new Exception("Payment mode not detected");
+        PaymentMode paymentMode = getPaymentMode(mode.toLowerCase());
+        if (paymentMode == null) {
+            throw new IllegalArgumentException("Invalid payment mode");
         }
-        if(p == null)
-        {
-            throw new Exception("Payment mode not detected");
-        }
+
         if (amountSent < bill) {
-            throw new Exception("Insufficient Amount");
+            throw new IllegalArgumentException("Insufficient amount");
         }
 
         Payment payment = new Payment();
         payment.setReservation(reservation);
         payment.setPaymentCompleted(true);
-        payment.setPaymentMode(p);
+        payment.setPaymentMode(paymentMode);
+
         spot.setOccupied(false);
         spot.getReservationList().removeIf(r -> r.getId() == reservationId);
 
         spotRepository.save(spot);
-        // Save the payment entity
-        return paymentRepository2.save(payment);
+        return paymentRepository.save(payment);
     }
 
-    public PaymentMode getPaymentmode(String mode)
-    {
-        if(mode.equals("cash"))
-        {
-            return PaymentMode.CASH;
-        }else if(mode.equals("card"))
-        {
-            return PaymentMode.CARD;
-        }else if(mode.equals("upi"))
-        {
-            return PaymentMode.UPI;
+    private PaymentMode getPaymentMode(String mode) {
+        switch (mode) {
+            case "cash":
+                return PaymentMode.CASH;
+            case "card":
+                return PaymentMode.CARD;
+            case "upi":
+                return PaymentMode.UPI;
+            default:
+                return null;
         }
-        return null;
     }
 }

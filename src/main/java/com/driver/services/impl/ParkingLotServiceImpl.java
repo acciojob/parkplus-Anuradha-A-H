@@ -76,18 +76,25 @@ public class ParkingLotServiceImpl implements ParkingLotService {
 
     @Override
     public void deleteParkingLot(int parkingLotId) {
-        Optional<ParkingLot> parkingLotOptional = parkingLotRepository.findById(parkingLotId);
-        if (parkingLotOptional.isPresent()) {
-            ParkingLot parkingLot = parkingLotOptional.get();
-            List<Spot> spots = parkingLot.getSpotList();
-            for (Spot spot : spots) {
-                reservationRepository.deleteAllBySpot(spot);
-            }
-            spotRepository.deleteAll(spots);
-            parkingLotRepository.delete(parkingLot);
-        } else {
-            throw new IllegalArgumentException("Parking lot not found");
+        Optional<ParkingLot> parkingOptional = parkingLotRepository.findById(parkingLotId);
+        if (parkingOptional.isEmpty()) {
+            return; // Parking lot not found, nothing to delete
         }
+
+        ParkingLot parkingLot = parkingOptional.get();
+        List<Spot> spots = parkingLot.getSpotList();
+        if (spots != null) {
+            // Delete all associated spots
+            for (Spot spot : spots) {
+                // Delete spot reservations (if any)
+                reservationRepository.deleteAllBySpot(spot);
+                // Delete the spot
+                spotRepository.delete(spot);
+            }
+        }
+
+        // Delete the parking lot entity
+        parkingLotRepository.delete(parkingLot);
     }
 
     private SpotType determineSpotType(Integer numberOfWheels) {
