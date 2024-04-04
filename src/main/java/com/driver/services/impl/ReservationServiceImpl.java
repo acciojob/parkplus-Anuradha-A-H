@@ -76,4 +76,8 @@ public class ReservationServiceImpl implements ReservationService {
             return SpotType.OTHERS;
         }
     }
+
+    public List<Reservation> getall(){
+        return reservationRepository3.findAll();
+    }
 }
