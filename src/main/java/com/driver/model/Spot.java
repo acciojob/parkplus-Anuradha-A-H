@@ -19,6 +19,16 @@ public class Spot {
     private Integer pricePerHour;
     private Boolean occupied;
 
+
+
+
+    public Spot(ParkingLot parkingLot , SpotType spotType, Integer pricePerHour, Boolean occupied) {
+        this.parkingLot = parkingLot;
+        this.spotType = spotType;
+        this.pricePerHour = pricePerHour;
+        this.occupied = occupied;
+    }
+
     public int getId() {
         return id;
     }

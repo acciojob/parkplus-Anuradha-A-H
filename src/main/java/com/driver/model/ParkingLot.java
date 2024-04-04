@@ -15,6 +15,15 @@ public class ParkingLot {
     @OneToMany(mappedBy = "parkingLot",cascade = CascadeType.ALL)
     List<Spot> spotList;
 
+    public ParkingLot() {
+    }
+
+    public ParkingLot(String name, String address) {
+
+        this.name = name;
+        this.address = address;
+    }
+
     public int getId() {
         return id;
     }

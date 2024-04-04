@@ -16,6 +16,12 @@ public class User {
     private String phoneNumber;
     private String password;
 
+    public User(String name, String phoneNumber, String password) {
+        this.name = name;
+        this.phoneNumber = phoneNumber;
+        this.password = password;
+    }
+
     public int getId() {
         return id;
     }
