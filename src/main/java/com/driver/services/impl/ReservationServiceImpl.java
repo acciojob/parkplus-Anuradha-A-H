@@ -24,11 +24,11 @@ public class ReservationServiceImpl implements ReservationService {
     @Override
     public Reservation reserveSpot(Integer userId, Integer parkingLotId, Integer timeInHours, Integer numberOfWheels) throws Exception {
         User user = userRepository3.findById(userId)
-                .orElseThrow(() -> new Exception("Cannot make reservation"));
+                .orElseThrow(() -> new Exception("User Not Found"));
 
         // Retrieve the parking lot entity from the database
         ParkingLot parkingLot = parkingLotRepository3.findById(parkingLotId)
-                .orElseThrow(() -> new Exception("Cannot make reservation"));
+                .orElseThrow(() -> new Exception("Parking Lot Not Found"));
 
         List<Spot> availableSpots = spotRepository3.findByParkingLotAndSpotTypeGreaterThanEqualAndOccupiedFalse(parkingLot, determineSpotType(numberOfWheels));
 
