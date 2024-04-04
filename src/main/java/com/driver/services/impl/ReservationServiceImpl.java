@@ -33,7 +33,7 @@ public class ReservationServiceImpl implements ReservationService {
         List<Spot> availableSpots = spotRepository3.findByParkingLotAndSpotTypeGreaterThanEqualAndOccupiedFalse(parkingLot, determineSpotType(numberOfWheels));
 
         if (availableSpots.isEmpty()) {
-            throw new Exception("Cannot make reservation");
+            return null;
         }
 
         Spot minPriceSpot = availableSpots.get(0);
