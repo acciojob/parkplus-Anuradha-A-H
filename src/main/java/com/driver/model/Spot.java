@@ -19,7 +19,9 @@ public class Spot {
     private Integer pricePerHour;
     private Boolean occupied;
 
+    public Spot(){
 
+    }
 
 
     public Spot(ParkingLot parkingLot , SpotType spotType, Integer pricePerHour, Boolean occupied) {

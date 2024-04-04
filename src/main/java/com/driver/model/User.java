@@ -15,6 +15,9 @@ public class User {
     private String name;
     private String phoneNumber;
     private String password;
+    public User(){
+
+    }
 
     public User(String name, String phoneNumber, String password) {
         this.name = name;

@@ -26,11 +26,12 @@ public class UserServiceImpl implements UserService {
     @Override
     public void deleteUser(Integer userId) {
 
-        User user = userRepository4.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        Optional<User> user = userRepository4.findById(userId);
+        if(user.isEmpty())
+            return;
 
         // Retrieve all reservations associated with the user
-        List<Reservation> reservations = reservationRepository.findAllByUser(user);
+        List<Reservation> reservations = reservationRepository.findAllByUser(user.get());
 
         for(Reservation r : reservations)
         {
@@ -43,7 +44,7 @@ public class UserServiceImpl implements UserService {
         reservationRepository.deleteAll(reservations);
 
         // Delete the user
-        userRepository4.delete(user);
+        userRepository4.delete(user.get());
 
     }
 

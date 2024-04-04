@@ -14,6 +14,9 @@ public class Payment {
 
     boolean paymentCompleted;
     PaymentMode paymentMode;
+    public Payment(){
+
+    }
 
     public int getId() {
         return id;

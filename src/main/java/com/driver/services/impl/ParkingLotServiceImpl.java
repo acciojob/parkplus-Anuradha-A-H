@@ -41,7 +41,7 @@ public class ParkingLotServiceImpl implements ParkingLotService {
 
         SpotType spotType = determineSpotType(numberOfWheels);
 
-        Spot spot = new Spot( parkingLot , spotType, pricePerHour, true);
+        Spot spot = new Spot( parkingLot , spotType, pricePerHour, false);
 
         Spot save = spotRepository1.save(spot);
         List<Spot> spotList = parkingLot.getSpotList();
