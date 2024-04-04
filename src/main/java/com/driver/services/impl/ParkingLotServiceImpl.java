@@ -10,11 +10,11 @@ import com.driver.repository.SpotRepository;
 import com.driver.services.ParkingLotService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.OptionalLong;
 
 @Service
 public class ParkingLotServiceImpl implements ParkingLotService {
@@ -35,21 +35,31 @@ public class ParkingLotServiceImpl implements ParkingLotService {
     }
 
     @Override
-    public Spot addSpot(int parkingLotId, Integer numberOfWheels, Integer pricePerHour) {
+    public Spot addSpot(int parkingLotId, Integer numberOfWheels, Integer pricePerHour) throws Exception{
         Optional<ParkingLot> parkingLotOptional = parkingLotRepository.findById(parkingLotId);
-        if (parkingLotOptional.isEmpty()) {
-            throw new IllegalArgumentException("Parking lot not found");
+//        if (parkingLotOptional.isEmpty()) {
+//            throw new Exception("Parking lot not found");
+//        }
+        if(!parkingLotOptional.isPresent())
+        {
+            throw new Exception("Parking lot not found");
         }
         ParkingLot parkingLot = parkingLotOptional.get();
         SpotType spotType = determineSpotType(numberOfWheels);
         Spot spot = new Spot(parkingLot, spotType, pricePerHour, false);
+
         Spot savedSpot = spotRepository.save(spot);
-        parkingLot.getSpotList().add(savedSpot);
+
+        // Update the parkingLot's spotList
+        List<Spot> updatedSpotList = new ArrayList<>(parkingLot.getSpotList());
+        updatedSpotList.add(savedSpot);
+        parkingLot.setSpotList(updatedSpotList);
         parkingLotRepository.save(parkingLot);
         return savedSpot;
     }
 
     @Override
+    @Transactional // Add this annotation to ensure the method executes within a transactional context
     public void deleteSpot(int spotId) {
         Optional<Spot> spotOptional = spotRepository.findById(spotId);
         if (spotOptional.isPresent()) {
@@ -106,4 +116,9 @@ public class ParkingLotServiceImpl implements ParkingLotService {
             return SpotType.OTHERS;
         }
     }
+
+
+//    public List<ParkingLot> getall(){
+//        return parkingLotRepository.findAll();
+//    }
 }

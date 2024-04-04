@@ -13,5 +13,5 @@ public interface ParkingLotService {
 
     ParkingLot addParkingLot(String name, String address);
 
-    Spot addSpot(int parkingLotId, Integer numberOfWheels, Integer pricePerHour);
+    Spot addSpot(int parkingLotId, Integer numberOfWheels, Integer pricePerHour)throws Exception;
 }
