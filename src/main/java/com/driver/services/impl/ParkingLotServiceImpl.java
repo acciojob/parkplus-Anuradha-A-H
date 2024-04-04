@@ -18,45 +18,79 @@ import java.util.OptionalLong;
 
 @Service
 public class ParkingLotServiceImpl implements ParkingLotService {
-    @Autowired
-    ParkingLotRepository parkingLotRepository1;
 
     @Autowired
-    ReservationRepository reservationRepository;
+    private ParkingLotRepository parkingLotRepository;
+
     @Autowired
-    SpotRepository spotRepository1;
+    private ReservationRepository reservationRepository;
+
+    @Autowired
+    private SpotRepository spotRepository;
+
     @Override
     public ParkingLot addParkingLot(String name, String address) {
-
         ParkingLot parkingLot = new ParkingLot(name, address);
-        return parkingLotRepository1.save(parkingLot);
-
-
-
+        return parkingLotRepository.save(parkingLot);
     }
 
     @Override
     public Spot addSpot(int parkingLotId, Integer numberOfWheels, Integer pricePerHour) {
-        Optional<ParkingLot> parking = parkingLotRepository1.findById(parkingLotId);
-        if(parking.isEmpty())
-            return null;
-        ParkingLot parkingLot = parking.get();
+        Optional<ParkingLot> parkingLotOptional = parkingLotRepository.findById(parkingLotId);
+        if (parkingLotOptional.isEmpty()) {
+            throw new IllegalArgumentException("Parking lot not found");
+        }
+        ParkingLot parkingLot = parkingLotOptional.get();
         SpotType spotType = determineSpotType(numberOfWheels);
-
-        Spot spot = new Spot( parkingLot , spotType, pricePerHour, false);
-
-        Spot spot1 = spotRepository1.save(spot);
-        List<Spot> spotList = parkingLot.getSpotList();
-        spotList.add(spot);
-        parkingLot.setSpotList(spotList);
-        parkingLotRepository1.save(parkingLot);
-        return spot1;
+        Spot spot = new Spot(parkingLot, spotType, pricePerHour, false);
+        Spot savedSpot = spotRepository.save(spot);
+        parkingLot.getSpotList().add(savedSpot);
+        parkingLotRepository.save(parkingLot);
+        return savedSpot;
     }
 
+    @Override
+    public void deleteSpot(int spotId) {
+        Optional<Spot> spotOptional = spotRepository.findById(spotId);
+        if (spotOptional.isPresent()) {
+            Spot spot = spotOptional.get();
+            ParkingLot parkingLot = spot.getParkingLot();
+            parkingLot.getSpotList().removeIf(s -> s.getId() == spotId);
+            parkingLotRepository.save(parkingLot);
+            reservationRepository.deleteAllBySpot(spot);
+            spotRepository.delete(spot);
+        }
+    }
 
+    @Override
+    public Spot updateSpot(int parkingLotId, int spotId, int pricePerHour) {
+        Optional<Spot> spotOptional = spotRepository.findById(spotId);
+        if (spotOptional.isPresent()) {
+            Spot spot = spotOptional.get();
+            spot.setPricePerHour(pricePerHour);
+            return spotRepository.save(spot);
+        } else {
+            throw new IllegalArgumentException("Spot not found");
+        }
+    }
+
+    @Override
+    public void deleteParkingLot(int parkingLotId) {
+        Optional<ParkingLot> parkingLotOptional = parkingLotRepository.findById(parkingLotId);
+        if (parkingLotOptional.isPresent()) {
+            ParkingLot parkingLot = parkingLotOptional.get();
+            List<Spot> spots = parkingLot.getSpotList();
+            for (Spot spot : spots) {
+                reservationRepository.deleteAllBySpot(spot);
+            }
+            spotRepository.deleteAll(spots);
+            parkingLotRepository.delete(parkingLot);
+        } else {
+            throw new IllegalArgumentException("Parking lot not found");
+        }
+    }
 
     private SpotType determineSpotType(Integer numberOfWheels) {
-        // Determine the spot type based on the number of wheels
         if (numberOfWheels == 2) {
             return SpotType.TWO_WHEELER;
         } else if (numberOfWheels == 4) {
@@ -64,78 +98,5 @@ public class ParkingLotServiceImpl implements ParkingLotService {
         } else {
             return SpotType.OTHERS;
         }
-    }
-    @Override
-    public void deleteSpot(int spotId) {
-        Optional<Spot> sp = spotRepository1.findById(spotId);
-        if(sp.isEmpty())
-            return;
-        Spot spot = sp.get();
-
-        // Delete the spot entity from the database
-        ParkingLot p = spot.getParkingLot();
-        List<Spot> spotList = new ArrayList<>(p.getSpotList());
-        spotList.removeIf(s -> s.getId() == spotId);
-        p.setSpotList(spotList);
-        parkingLotRepository1.save(p);
-
-
-        Optional<Reservation> reservation = reservationRepository.findBySpot(spot);
-        reservation.ifPresent(reservationRepository::delete);
-
-
-        spotRepository1.delete(spot);
-
-    }
-
-    @Override
-    public Spot updateSpot(int parkingLotId, int spotId, int pricePerHour) {
-        Optional<ParkingLot> parking = parkingLotRepository1.findById(parkingLotId);
-        if(parking.isEmpty())
-             return null;
-        ParkingLot parkingLot = parking.get();
-        Optional<Spot> sp = spotRepository1.findById(spotId);
-        if(sp.isEmpty())
-            return null;
-        Spot spot = sp.get();
-        spot.setPricePerHour(pricePerHour);
-
-
-        // Update the spot within the parking lot's list of spots
-        List<Spot> spots = parkingLot.getSpotList();
-        for (Spot s : spots) {
-            if (s.getId() == spotId) {
-                s.setPricePerHour(pricePerHour);
-                break;
-            }
-        }
-        parkingLot.setSpotList(spots);
-
-        // Save the updated parking lot entity to the database
-        ParkingLot updatedParkingLot = parkingLotRepository1.save(parkingLot);
-
-        return spotRepository1.save(spot);
-
-
-    }
-
-    @Override
-    public void deleteParkingLot(int parkingLotId) {
-        Optional<ParkingLot> parking = parkingLotRepository1.findById(parkingLotId);
-        if(parking.isEmpty())
-            return;
-        ParkingLot parkingLot = parking.get();
-
-        // Delete all associated spots
-        List<Spot> spots = parkingLot.getSpotList();
-        for (Spot spot : spots) {
-            // Delete spot reservations (if any)
-            reservationRepository.deleteAllBySpot(spot);
-            // Delete the spot
-            spotRepository1.delete(spot);
-        }
-
-        // Delete the parking lot entity
-        parkingLotRepository1.delete(parkingLot);
     }
 }

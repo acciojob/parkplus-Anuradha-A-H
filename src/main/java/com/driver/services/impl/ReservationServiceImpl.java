@@ -77,7 +77,7 @@ public class ReservationServiceImpl implements ReservationService {
         }
     }
 
-    public List<Reservation> getall(){
-        return reservationRepository3.findAll();
-    }
+//    public List<Reservation> getall(){
+//        return reservationRepository3.findAll();
+//    }
 }

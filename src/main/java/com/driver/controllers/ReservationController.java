@@ -26,9 +26,9 @@ public class ReservationController {
         }
 
     }
-    @GetMapping
-    public List<Reservation> getall(){
-        return reservationService.getall();
-    }
+//    @GetMapping
+//    public List<Reservation> getall(){
+//        return reservationService.getall();
+//    }
 
 }
