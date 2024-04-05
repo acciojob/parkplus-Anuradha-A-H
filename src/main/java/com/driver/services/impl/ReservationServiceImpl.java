@@ -23,61 +23,50 @@ public class ReservationServiceImpl implements ReservationService {
     ParkingLotRepository parkingLotRepository3;
     @Override
     public Reservation reserveSpot(Integer userId, Integer parkingLotId, Integer timeInHours, Integer numberOfWheels) throws Exception {
-        User user = userRepository3.findById(userId)
-                .orElseThrow(() -> new Exception("User Not Found"));
-
-        // Retrieve the parking lot entity from the database
-        ParkingLot parkingLot = parkingLotRepository3.findById(parkingLotId)
-                .orElseThrow(() -> new Exception("Parking Lot Not Found"));
-
-        List<Spot> availableSpots = spotRepository3.findByParkingLotAndSpotTypeGreaterThanEqualAndOccupiedFalse(parkingLot, determineSpotType(numberOfWheels));
-
-        if (availableSpots.isEmpty()) {
+        try {
+            Reservation reservation = new Reservation();
+            reservation.setNumberOfHours(timeInHours);
+            User user = userRepository3.findById(userId).get();
+            ParkingLot parkingLot = parkingLotRepository3.findById(parkingLotId).get();
+            Spot spot1 = getSpot(numberOfWheels, parkingLot);
+            reservation.setSpot(spot1);
+            reservation.setUser(user);
+            user.getReservationList().add(reservation);
+            spot1.getReservationList().add(reservation);
+            spotRepository3.save(spot1);
+            //reservationRepository3.save(reservation);
+            userRepository3.save(user);
+            return reservation;
+        }
+        catch(Exception e){
             return null;
         }
+    }
 
-        Spot minPriceSpot = availableSpots.get(0);
-        int minTotalPrice = minPriceSpot.getPricePerHour() * timeInHours;
-        for (Spot spot : availableSpots) {
-            int totalPrice = spot.getPricePerHour() * timeInHours;
-            if (totalPrice < minTotalPrice) {
-                minTotalPrice = totalPrice;
-                minPriceSpot = spot;
+    private static Spot getSpot(Integer numberOfWheels, ParkingLot parkingLot) throws Exception {
+        List<Spot> spotList = parkingLot.getSpotList();
+        Spot spot1 = null;
+        int price = Integer.MAX_VALUE;
+        for (Spot spot : spotList) {
+            int wheel = 0;
+            if (spot.getSpotType() == SpotType.TWO_WHEELER) {
+                wheel = 2;
+            } else if (spot.getSpotType() == SpotType.FOUR_WHEELER) {
+                wheel = 4;
+            } else if (spot.getSpotType() == SpotType.OTHERS) {
+                wheel = 99;
+            }
+            if (spot.getOccupied() == false && wheel > numberOfWheels && spot.getPricePerHour() < price) {
+                spot1 = spot;
+                price = spot.getPricePerHour();
             }
         }
-
-
-        // Create a new reservation entity for the user and selected spot
-        Reservation reservation = new Reservation();
-        reservation.setUser(user);
-        reservation.setSpot(minPriceSpot);
-        reservation.setNumberOfHours(timeInHours);
-
-        // Update the occupancy status of the selected spot
-        minPriceSpot.setOccupied(true);
-
-
-        // Save the reservation entity
-        Reservation re =  reservationRepository3.save(reservation);
-        List<Reservation> reservationList = minPriceSpot.getReservationList();
-           reservationList.add(re);
-           minPriceSpot.setReservationList(reservationList);
-        spotRepository3.save(minPriceSpot);
-        return re;
-    }
-
-    private SpotType determineSpotType(Integer numberOfWheels) {
-        // Determine the spot type based on the number of wheels
-        if (numberOfWheels == 2) {
-            return SpotType.TWO_WHEELER;
-        } else if (numberOfWheels == 4) {
-            return SpotType.FOUR_WHEELER;
-        } else {
-            return SpotType.OTHERS;
+        if (spot1 == null) {
+            throw new Exception();
         }
+        spot1.setOccupied(true);
+        return spot1;
     }
 
-//    public List<Reservation> getall(){
-//        return reservationRepository3.findAll();
-//    }
+
 }

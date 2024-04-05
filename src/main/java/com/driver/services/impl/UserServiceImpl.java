@@ -26,43 +26,29 @@ public class UserServiceImpl implements UserService {
     @Override
     public void deleteUser(Integer userId) {
 
-        Optional<User> optionalUser = userRepository4.findById(userId);
-        if (optionalUser.isPresent()) {
-            User user = optionalUser.get();
-
-            // Retrieve all reservations associated with the user
-            List<Reservation> reservations = reservationRepository.findAllByUser(user);
-
-            // Update spot occupancy status for each reservation
-            for (Reservation reservation : reservations) {
-                Spot spot = reservation.getSpot();
-                spot.setOccupied(false);
-                spotRepository.save(spot);
-            }
-
-            // Delete all reservations associated with the user
-            reservationRepository.deleteAll(reservations);
-
-            // Delete the user
-            userRepository4.delete(user);
-        }
+        userRepository4.deleteById(userId);
     }
 
     @Override
     public User updatePassword(Integer userId, String password) {
 
-        Optional<User> user = userRepository4.findById(userId);
-        if(user.isEmpty())
-            return null;
-        User userdtl = user.get();
-        userdtl.setPassword(password);
-        return userRepository4.save(userdtl);
+        User user = userRepository4.findById(userId).orElse(null);
+        user.setPassword(password);
+        userRepository4.save(user);
+
+        return user;
 
     }
 
     @Override
     public void register(String name, String phoneNumber, String password) {
-        User user = new User(name, phoneNumber,password);
+        User user = new User();
+
+        // Set Properties
+        user.setName(name);
+        user.setPhoneNumber(phoneNumber);
+        user.setPassword(password);
+
         userRepository4.save(user);
     }
 }
